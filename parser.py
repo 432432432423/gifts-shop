@@ -49,7 +49,7 @@ COLLECTIONS = [
     "Victory Medal",
 ]
 
-ton_rate_cache = {"rate": 500.0, "updated_at": 0}
+ton_rate_cache = {"rate": 105.0, "updated_at": 0}
 
 
 def get_ton_to_rub():
