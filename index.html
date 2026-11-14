@@ -86,7 +86,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans
 <a href="#" class="brand" id="brandLink"><span class="brand-dot"></span><span>RealNoobasik228's shop</span></a>
 <div class="top-links">
 <button id="aboutOpenBtn">О сайте</button>
-<a href="https://funpay.com" target="_blank" class="msg-link" id="topSellerLink">Написать продавцу</a>
+<a href="funpay.com" target="_blank" class="msg-link" id="topSellerLink">Написать продавцу</a>
 </div>
 </div>
 <div class="seller-banner">
@@ -120,6 +120,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans
 <div class="search-wrap"><input type="text" id="searchInput" class="search-input" placeholder="Номер или название подарка, модели, фона..."></div>
 <div class="price-range"><span>от</span><input type="number" id="minPriceInput" placeholder="0"><span>₽</span><span>до</span><input type="number" id="maxPriceInput" placeholder="∞"><span>₽</span></div>
 <select class="sort-select" id="sortSelect"><option value="PriceAsc">Сначала дешёвые</option><option value="PriceDesc">Сначала дорогие</option></select>
+</div>
+</div>
 <div class="mono-panel" id="monoPanel">
 <div class="mono-title">💎 Монохромные подарки (совпадение цвета модели и фона)</div>
 <div class="color-chips" id="colorChips"></div>
@@ -142,163 +144,151 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans
 </div>
 </div>
 <script>
-let funpayUrl = "https://funpay.com";
+let funpayUrl = "funpay.com";
 let initializedCollections = false;
-let rawItems = [];
+let rawItems = new Array();
 let currentTab = 'all';
 let selectedMonoColor = 'ALL';
-let favorites = [];
-
-try { favorites = JSON.parse(localStorage.getItem('nft_favs') || '[]'); } catch (e) { favorites = []; }
-
-const COLOR_MAP = [
-    {key:'Серые',dot:'#9ca3af',words:['black','onyx','silver','grey','gray','slate','graphite','steel','ash','smoke','white','ivory']},
-    {key:'Фиолетовые',dot:'#a855f7',words:['purple','violet','lavender','grape','plum','amethyst','indigo','lilac']},
-    {key:'Розовые',dot:'#f472b6',words:['pink','rose','magenta','peach','coral','sakura','flamingo','raspberry','berry']},
-    {key:'Красные',dot:'#ef4444',words:['red','crimson','ruby','cherry','scarlet','garnet','lava','flame']},
-    {key:'Оранжевые',dot:'#f97316',words:['orange','amber','tangerine','copper','apricot','sunset','persimmon','carrot']},
-    {key:'Жёлтые',dot:'#eab308',words:['yellow','gold','golden','lemon','sun','honey','banana','mustard','vanilla']},
-    {key:'Зелёные',dot:'#22c55e',words:['green','emerald','mint','lime','olive','forest','jade','moss','sage','shamrock']},
-    {key:'Бирюзовые',dot:'#14b8a6',words:['cyan','teal','turquoise','aqua','marine','seafoam']},
-    {key:'Синие',dot:'#3b82f6',words:['blue','sapphire','cobalt','navy','sky','azure','celtic','ocean','ice']},
-    {key:'Коричневые',dot:'#a16207',words:['brown','chocolate','coffee','caramel','bronze','wood','sand','cocoa','chestnut']}
-];
-
+let favorites = new Array();
+try { favorites = JSON.parse(localStorage.getItem('nft_favs') || '<>'); } catch (e) { favorites = new Array(); }
+const COLOR_MAP = new Array(
+{key:'Серые',dot:'#9ca3af',words:new Array('black','onyx','silver','grey','gray','slate','graphite','steel','ash','smoke','white','ivory')},
+{key:'Фиолетовые',dot:'#a855f7',words:new Array('purple','violet','lavender','grape','plum','amethyst','indigo','lilac')},
+{key:'Розовые',dot:'#f472b6',words:new Array('pink','rose','magenta','peach','coral','sakura','flamingo','raspberry','berry')},
+{key:'Красные',dot:'#ef4444',words:new Array('red','crimson','ruby','cherry','scarlet','garnet','lava','flame')},
+{key:'Оранжевые',dot:'#f97316',words:new Array('orange','amber','tangerine','copper','apricot','sunset','persimmon','carrot')},
+{key:'Жёлтые',dot:'#eab308',words:new Array('yellow','gold','golden','lemon','sun','honey','banana','mustard','vanilla')},
+{key:'Зелёные',dot:'#22c55e',words:new Array('green','emerald','mint','lime','olive','forest','jade','moss','sage','shamrock')},
+{key:'Бирюзовые',dot:'#14b8a6',words:new Array('cyan','teal','turquoise','aqua','marine','seafoam')},
+{key:'Синие',dot:'#3b82f6',words:new Array('blue','sapphire','cobalt','navy','sky','azure','celtic','ocean','ice')},
+{key:'Коричневые',dot:'#a16207',words:new Array('brown','chocolate','coffee','caramel','bronze','wood','sand','cocoa','chestnut')}
+);
 function detectColorCategory(t) {
-    const l = (t || '').toLowerCase();
-    for (const c of COLOR_MAP) { if (c.words.some(w => l.includes(w))) return c; }
-    return null;
+const l = (t || '').toLowerCase();
+for (const c of COLOR_MAP) { if (c.words.some(w => l.includes(w))) return c; }
+return null;
 }
-
 function updateFavCounter() { document.getElementById('favCount').innerText = favorites.length; }
-
 function switchTab(t) {
-    currentTab = t;
-    document.getElementById('tabAll').className = 'tab-btn' + (t === 'all' ? ' active-all' : '');
-    document.getElementById('tabMono').className = 'tab-btn' + (t === 'mono' ? ' active-mono' : '');
-    document.getElementById('tabFav').className = 'tab-btn' + (t === 'fav' ? ' active-fav' : '');
-    document.getElementById('monoPanel').style.display = (t === 'mono') ? 'block' : 'none';
-    applyFilters();
+currentTab = t;
+document.getElementById('tabAll').className = 'tab-btn' + (t === 'all' ? ' active-all' : '');
+document.getElementById('tabMono').className = 'tab-btn' + (t === 'mono' ? ' active-mono' : '');
+document.getElementById('tabFav').className = 'tab-btn' + (t === 'fav' ? ' active-fav' : '');
+document.getElementById('monoPanel').style.display = (t === 'mono') ? 'block' : 'none';
+applyFilters();
 }
-
 function resetAllFilters() {
-    document.getElementById('collectionSelect').value = 'ALL';
-    document.getElementById('modelSelect').value = '';
-    document.getElementById('backdropSelect').value = '';
-    document.getElementById('searchInput').value = '';
-    document.getElementById('minPriceInput').value = '';
-    document.getElementById('maxPriceInput').value = '';
-    document.getElementById('sortSelect').value = 'PriceAsc';
-    selectedMonoColor = 'ALL';
-    loadGifts();
+document.getElementById('collectionSelect').value = 'ALL';
+document.getElementById('modelSelect').value = '';
+document.getElementById('backdropSelect').value = '';
+document.getElementById('searchInput').value = '';
+document.getElementById('minPriceInput').value = '';
+document.getElementById('maxPriceInput').value = '';
+document.getElementById('sortSelect').value = 'PriceAsc';
+selectedMonoColor = 'ALL';
+loadGifts();
 }
-
 async function loadGifts() {
-    const col = document.getElementById('collectionSelect').value;
-    const sort = document.getElementById('sortSelect').value;
-    const q = document.getElementById('searchInput').value.trim();
-    const status = document.getElementById('statusMsg');
-    const grid = document.getElementById('grid');
-
-    document.getElementById('emptyFavState').style.display = 'none';
-    grid.innerHTML = '';
-    status.style.display = 'block';
-    status.innerText = 'Загрузка актуальных подарков...';
-
-    try {
-        const res = await fetch('/api/gifts?collection=' + encodeURIComponent(col) + '&query=' + encodeURIComponent(q) + '&sort=' + encodeURIComponent(sort));
-        const data = await res.json();
-        if (data.error) { status.innerText = data.error; return; }
-        if (data.funpay_link) { funpayUrl = data.funpay_link; document.getElementById('topSellerLink').href = funpayUrl; }
-        if (!initializedCollections && data.collections) {
-            const colSel = document.getElementById('collectionSelect');
-            colSel.innerHTML = '<option value="ALL">Коллекции: Все (29)</option>';
-            data.collections.forEach(c => { const o = document.createElement('option'); o.value = c; o.innerText = c; if (c === col) o.selected = true; colSel.appendChild(o); });
-            initializedCollections = true;
-        }
-        rawItems = (data.items || []).map(item => {
-            const cM = detectColorCategory(item.model);
-            const cB = detectColorCategory(item.backdrop);
-            const isM = (cM && cB && cM.key === cB.key) || (cB && !cM);
-            return { ...item, colorCat: cB ? cB.key : (cM ? cM.key : null), colorDot: cB ? cB.dot : (cM ? cM.dot : '#8b5cf6'), isMono: Boolean(isM) };
-        });
-        populateAttributeDropdowns(rawItems);
-        buildMonoChips();
-        applyFilters();
-    } catch (err) { status.innerText = 'Ошибка загрузки данных: ' + err.message; }
+const col = document.getElementById('collectionSelect').value;
+const sort = document.getElementById('sortSelect').value;
+const q = document.getElementById('searchInput').value.trim();
+const status = document.getElementById('statusMsg');
+const grid = document.getElementById('grid');
+document.getElementById('emptyFavState').style.display = 'none';
+grid.innerHTML = '';
+status.style.display = 'block';
+status.innerText = 'Загрузка актуальных подарков...';
+try {
+const res = await fetch('/api/gifts?collection=' + encodeURIComponent(col) + '&query=' + encodeURIComponent(q) + '&sort=' + encodeURIComponent(sort));
+const data = await res.json();
+if (data.error) { status.innerText = data.error; return; }
+if (data.funpay_link) { funpayUrl = data.funpay_link; document.getElementById('topSellerLink').href = funpayUrl; }
+if (!initializedCollections && data.collections) {
+const colSel = document.getElementById('collectionSelect');
+colSel.innerHTML = '<option value="ALL">Коллекции: Все (29)</option>';
+data.collections.forEach(c => { const o = document.createElement('option'); o.value = c; o.innerText = c; if (c === col) o.selected = true; colSel.appendChild(o); });
+initializedCollections = true;
 }
-
+rawItems = (data.items || new Array()).map(item => {
+const cM = detectColorCategory(item.model);
+const cB = detectColorCategory(item.backdrop);
+const isM = (cM && cB && cM.key === cB.key) || (cB && !cM);
+return Object.assign({}, item, { colorCat: cB ? cB.key : (cM ? cM.key : null), colorDot: cB ? cB.dot : (cM ? cM.dot : '#8b5cf6'), isMono: Boolean(isM) });
+});
+populateAttributeDropdowns(rawItems);
+buildMonoChips();
+applyFilters();
+} catch (err) { status.innerText = 'Ошибка загрузки данных: ' + err.message; }
+}
 function populateAttributeDropdowns(items) {
-    const models = [...new Set(items.map(i => i.model).filter(Boolean))].sort();
-    const backdrops = [...new Set(items.map(i => i.backdrop).filter(Boolean))].sort();
-    const mSel = document.getElementById('modelSelect');
-    const bSel = document.getElementById('backdropSelect');
-    const curM = mSel.value, curB = bSel.value;
-    mSel.innerHTML = '<option value="">Модели: Все</option>';
-    models.forEach(m => { const o = document.createElement('option'); o.value = m; o.innerText = m; if (m === curM) o.selected = true; mSel.appendChild(o); });
-    bSel.innerHTML = '<option value="">Фоны: Все</option>';
-    backdrops.forEach(b => { const o = document.createElement('option'); o.value = b; o.innerText = b; if (b === curB) o.selected = true; bSel.appendChild(o); });
+const models = Array.from(new Set(items.map(i => i.model).filter(Boolean))).sort();
+const backdrops = Array.from(new Set(items.map(i => i.backdrop).filter(Boolean))).sort();
+const mSel = document.getElementById('modelSelect');
+const bSel = document.getElementById('backdropSelect');
+const curM = mSel.value, curB = bSel.value;
+mSel.innerHTML = '<option value="">Модели: Все</option>';
+models.forEach(m => { const o = document.createElement('option'); o.value = m; o.innerText = m; if (m === curM) o.selected = true; mSel.appendChild(o); });
+bSel.innerHTML = '<option value="">Фоны: Все</option>';
+backdrops.forEach(b => { const o = document.createElement('option'); o.value = b; o.innerText = b; if (b === curB) o.selected = true; bSel.appendChild(o); });
 }
-
 function buildMonoChips() {
-    const monoItems = rawItems.filter(i => i.colorCat);
-    const container = document.getElementById('colorChips');
-    container.innerHTML = '';
-    const allBtn = document.createElement('button');
-    allBtn.className = 'color-chip' + (selectedMonoColor === 'ALL' ? ' active' : '');
-    allBtn.innerHTML = '💎 Все цвета · ' + monoItems.length;
-    allBtn.onclick = () => { selectedMonoColor = 'ALL'; buildMonoChips(); applyFilters(); };
-    container.appendChild(allBtn);
-    COLOR_MAP.forEach(c => {
-        const cnt = monoItems.filter(i => i.colorCat === c.key).length;
-        if (cnt > 0) {
-            const btn = document.createElement('button');
-            btn.className = 'color-chip' + (selectedMonoColor === c.key ? ' active' : '');
-            btn.innerHTML = '<span class="dot-c" style="background:' + c.dot + '"></span> ' + c.key + ' · ' + cnt;
-            btn.onclick = () => { selectedMonoColor = c.key; buildMonoChips(); applyFilters(); };
-            container.appendChild(btn);
-        }
-    });
+const monoItems = rawItems.filter(i => i.colorCat);
+const container = document.getElementById('colorChips');
+container.innerHTML = '';
+const allBtn = document.createElement('button');
+allBtn.className = 'color-chip' + (selectedMonoColor === 'ALL' ? ' active' : '');
+allBtn.innerHTML = '💎 Все цвета · ' + monoItems.length;
+allBtn.onclick = () => { selectedMonoColor = 'ALL'; buildMonoChips(); applyFilters(); };
+container.appendChild(allBtn);
+COLOR_MAP.forEach(c => {
+const cnt = monoItems.filter(i => i.colorCat === c.key).length;
+if (cnt > 0) {
+const btn = document.createElement('button');
+btn.className = 'color-chip' + (selectedMonoColor === c.key ? ' active' : '');
+btn.innerHTML = '<span class="dot-c" style="background:' + c.dot + '"></span> ' + c.key + ' · ' + cnt;
+btn.onclick = () => { selectedMonoColor = c.key; buildMonoChips(); applyFilters(); };
+container.appendChild(btn);
 }
-
+});
+}
 function applyFilters() {
-    const status = document.getElementById('statusMsg');
-    const emptyFav = document.getElementById('emptyFavState');
-    const grid = document.getElementById('grid');
-    let list = currentTab === 'fav' ? [...favorites] : [...rawItems];
-    if (currentTab === 'mono') {
-        list = list.filter(i => i.colorCat);
-        if (selectedMonoColor !== 'ALL') list = list.filter(i => i.colorCat === selectedMonoColor);
-    }
-    const mF = document.getElementById('modelSelect').value;
-    const bF = document.getElementById('backdropSelect').value;
-    const q = document.getElementById('searchInput').value.toLowerCase().trim();
-    const minP = parseFloat(document.getElementById('minPriceInput').value) || 0;
-    const maxP = parseFloat(document.getElementById('maxPriceInput').value) || Infinity;
-    list = list.filter(i => {
-        if (mF && i.model !== mF) return false;
-        if (bF && i.backdrop !== bF) return false;
-        if (i.price_rub < minP || i.price_rub > maxP) return false;
-        if (q && !(i.collection + ' ' + i.model + ' ' + i.backdrop + ' ' + i.symbol + ' #' + i.number).toLowerCase().includes(q)) return false;
-        return true;
-    });
-    grid.innerHTML = ''; emptyFav.style.display = 'none'; status.style.display = 'none';
-    if (list.length === 0) {
-        if (currentTab === 'fav' && favorites.length === 0) emptyFav.style.display = 'block';
-        else { status.style.display = 'block'; status.innerText = 'По выбранным фильтрам подарков не найдено. Нажмите Enter в поиске для поиска по всей базе.'; }
-        return;
-    }
-    list.forEach(item => {
-        const isFav = favorites.some(f => f.id === item.id);
-        const card = document.createElement('div'); card.className = 'card';
-        const visual = document.createElement('div'); visual.className = 'card-visual';
-        visual.style.background = 'radial-gradient(circle, ' + item.bg_center + ' 0%, ' + item.bg_edge + ' 100%)';
-        if (currentTab === 'mono' && item.colorCat) {
-            const tag = document.createElement('div'); tag.className = 'mono-tag';
-            tag.innerHTML = '<span class="dot-c" style="background:' + item.colorDot + '"></span>' + item.colorCat.slice(0, -1) + 'й';
-            visual.appendChild(tag);
-        }
-      const favBtn = document.createElement('button'); favBtn.className = 'fav-btn' + (isFav ? ' is-fav' : '');
+const status = document.getElementById('statusMsg');
+const emptyFav = document.getElementById('emptyFavState');
+const grid = document.getElementById('grid');
+let list = currentTab === 'fav' ? favorites.slice() : rawItems.slice();
+if (currentTab === 'mono') {
+list = list.filter(i => i.colorCat);
+if (selectedMonoColor !== 'ALL') list = list.filter(i => i.colorCat === selectedMonoColor);
+}
+const mF = document.getElementById('modelSelect').value;
+const bF = document.getElementById('backdropSelect').value;
+const q = document.getElementById('searchInput').value.toLowerCase().trim();
+const minP = parseFloat(document.getElementById('minPriceInput').value) || 0;
+const maxP = parseFloat(document.getElementById('maxPriceInput').value) || Infinity;
+list = list.filter(i => {
+if (mF && i.model !== mF) return false;
+if (bF && i.backdrop !== bF) return false;
+if (i.price_rub < minP || i.price_rub > maxP) return false;
+if (q && !(i.collection + ' ' + i.model + ' ' + i.backdrop + ' ' + i.symbol + ' #' + i.number).toLowerCase().includes(q)) return false;
+return true;
+});
+grid.innerHTML = ''; emptyFav.style.display = 'none'; status.style.display = 'none';
+if (list.length === 0) {
+if (currentTab === 'fav' && favorites.length === 0) emptyFav.style.display = 'block';
+else { status.style.display = 'block'; status.innerText = 'По выбранным фильтрам подарков не найдено. Нажмите Enter в поиске для поиска по всей базе.'; }
+return;
+}
+list.forEach(item => {
+const isFav = favorites.some(f => f.id === item.id);
+const card = document.createElement('div'); card.className = 'card';
+const visual = document.createElement('div'); visual.className = 'card-visual';
+visual.style.background = 'radial-gradient(circle, ' + item.bg_center + ' 0%, ' + item.bg_edge + ' 100%)';
+if (currentTab === 'mono' && item.colorCat) {
+const tag = document.createElement('div'); tag.className = 'mono-tag';
+tag.innerHTML = '<span class="dot-c" style="background:' + item.colorDot + '"></span>' + item.colorCat.slice(0, -1) + 'й';
+visual.appendChild(tag);
+}
+const favBtn = document.createElement('button'); favBtn.className = 'fav-btn' + (isFav ? ' is-fav' : '');
 favBtn.title = 'В избранное'; favBtn.innerText = isFav ? '♥' : '♡';
 favBtn.onclick = (e) => {
 e.stopPropagation();
@@ -347,4 +337,6 @@ document.getElementById('searchInput').oninput = applyFilters;
 document.getElementById('searchInput').onkeydown = (e) => { if (e.key === 'Enter') loadGifts(); };
 updateFavCounter();
 loadGifts();
-
+</script>
+</body>
+</html>
