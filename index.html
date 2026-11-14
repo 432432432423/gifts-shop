@@ -60,9 +60,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans
 .card-visual{height:195px;position:relative;display:flex;align-items:center;justify-content:center;margin:8px 8px 0;border-radius:14px;overflow:hidden}
 .card-visual img{width:132px;height:132px;object-fit:contain;filter:drop-shadow(0 8px 16px rgba(0,0,0,.45));transition:.2s}
 .card:hover .card-visual img{transform:scale(1.05)}
-.mono-tag{position:absolute;top:10px;left:10px;background:rgba(15,13,24,.75);backdrop-filter:blur(6px);padding:4px 10px;border-radius:999px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:5px}
-.fav-btn{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;background:rgba(15,13,24,.65);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.08);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px}
-.fav-btn.is-fav{color:var(--pink);border-color:rgba(244,63,94,.4)}
+.badge-left{position:absolute;top:10px;left:10px;background:rgba(15,13,24,.75);backdrop-filter:blur(6px);padding:4px 9px;border-radius:999px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:5px;color:#e2e8f0}
+.top-right-btns{position:absolute;top:10px;right:10px;display:flex;gap:6px}
+.icon-circle{width:30px;height:30px;border-radius:50%;background:rgba(15,13,24,.65);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.1);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;text-decoration:none}
+.icon-circle:hover{background:rgba(15,13,24,.9);border-color:var(--purp)}
+.icon-circle.is-fav{color:var(--pink);border-color:rgba(244,63,94,.4)}
 .card-body{padding:14px;display:flex;flex-direction:column;flex-grow:1}
 .card-title{font-size:15px;font-weight:700;margin-bottom:3px;color:#fff}
 .card-sub{font-size:12px;color:var(--mut);margin-bottom:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -98,7 +100,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans
 </div>
 </div>
 <div class="seller-stats">
-<div><div class="stat-label">Коллекций</div><div class="stat-val">29</div></div>
+<div><div class="stat-label">Доставка</div><div class="stat-val">Мгновенно</div></div>
 <div><div class="stat-label">Успешных сделок</div><div class="stat-val">55+</div></div>
 </div>
 </div>
@@ -110,7 +112,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans
 <div class="filter-box">
 <div class="filter-top">
 <div class="filter-pills">
-<select class="pill-select" id="collectionSelect"><option value="ALL">Коллекции: Все (29)</option></select>
+<select class="pill-select" id="collectionSelect"><option value="ALL">Коллекции: Все</option></select>
 <select class="pill-select" id="modelSelect"><option value="">Модели: Все</option></select>
 <select class="pill-select" id="backdropSelect"><option value="">Фоны: Все</option></select>
 </div>
@@ -123,7 +125,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans
 </div>
 </div>
 <div class="mono-panel" id="monoPanel">
-<div class="mono-title">💎 Монохромные подарки (совпадение цвета модели и фона)</div>
+<div class="mono-title">💎 Монохромные подарки (строгое совпадение цвета модели и фона)</div>
 <div class="color-chips" id="colorChips"></div>
 </div>
 <div id="statusMsg" class="status-msg">Загрузка актуальных подарков...</div>
@@ -138,8 +140,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans
 <div class="modal-bg" id="aboutModal">
 <div class="modal">
 <h3>О витрине RealNoobasik228's shop</h3>
-<p>Это официальный каталог NFT-подарков Telegram продавца <b>RealNoobasik228</b>. Цены обновляются в реальном времени.</p>
-<p><b>Как купить:</b> нажмите на кнопку с ценой под нужным подарком — текст заказа скопируется автоматически, и откроется мой профиль на FunPay. Оплата и передача подарка проходят строго через гарантию FunPay.</p>
+<p>Это официальный каталог NFT-подарков Telegram продавца <b>RealNoobasik228</b>. Все подарки на витрине проверены и готовы к мгновенной передаче после оплаты.</p>
+<p><b>Как купить:</b> нажмите на кнопку с ценой под нужным подарком — текст заказа скопируется автоматически, и откроется мой профиль на FunPay. Оплата проходит строго через гарантию FunPay.</p>
 <button class="price-btn" id="aboutCloseBtn">Понятно</button>
 </div>
 </div>
@@ -152,16 +154,16 @@ let selectedMonoColor = 'ALL';
 let favorites = new Array();
 try { favorites = JSON.parse(localStorage.getItem('nft_favs') || '<>'); } catch (e) { favorites = new Array(); }
 const COLOR_MAP = new Array(
-{key:'Серые',dot:'#9ca3af',words:new Array('black','onyx','silver','grey','gray','slate','graphite','steel','ash','smoke','white','ivory')},
-{key:'Фиолетовые',dot:'#a855f7',words:new Array('purple','violet','lavender','grape','plum','amethyst','indigo','lilac')},
-{key:'Розовые',dot:'#f472b6',words:new Array('pink','rose','magenta','peach','coral','sakura','flamingo','raspberry','berry')},
-{key:'Красные',dot:'#ef4444',words:new Array('red','crimson','ruby','cherry','scarlet','garnet','lava','flame')},
-{key:'Оранжевые',dot:'#f97316',words:new Array('orange','amber','tangerine','copper','apricot','sunset','persimmon','carrot')},
-{key:'Жёлтые',dot:'#eab308',words:new Array('yellow','gold','golden','lemon','sun','honey','banana','mustard','vanilla')},
-{key:'Зелёные',dot:'#22c55e',words:new Array('green','emerald','mint','lime','olive','forest','jade','moss','sage','shamrock')},
-{key:'Бирюзовые',dot:'#14b8a6',words:new Array('cyan','teal','turquoise','aqua','marine','seafoam')},
-{key:'Синие',dot:'#3b82f6',words:new Array('blue','sapphire','cobalt','navy','sky','azure','celtic','ocean','ice')},
-{key:'Коричневые',dot:'#a16207',words:new Array('brown','chocolate','coffee','caramel','bronze','wood','sand','cocoa','chestnut')}
+{key:'Серые',dot:'#9ca3af',words:new Array('black','onyx','silver','grey','gray','slate','graphite','steel','ash','smoke','white','ivory','obsidian','monochrome')},
+{key:'Фиолетовые',dot:'#a855f7',words:new Array('purple','violet','lavender','grape','plum','amethyst','indigo','lilac','ultraviolet')},
+{key:'Розовые',dot:'#f472b6',words:new Array('pink','rose','magenta','peach','coral','sakura','flamingo','raspberry','berry','bubblegum')},
+{key:'Красные',dot:'#ef4444',words:new Array('red','crimson','ruby','cherry','scarlet','garnet','lava','flame','blood')},
+{key:'Оранжевые',dot:'#f97316',words:new Array('orange','amber','tangerine','copper','apricot','sunset','persimmon','carrot','pumpkin')},
+{key:'Жёлтые',dot:'#eab308',words:new Array('yellow','gold','golden','lemon','sun','honey','banana','mustard','vanilla','cream')},
+{key:'Зелёные',dot:'#22c55e',words:new Array('green','emerald','mint','lime','olive','forest','jade','moss','sage','shamrock','toxic')},
+{key:'Бирюзовые',dot:'#14b8a6',words:new Array('cyan','teal','turquoise','aqua','marine','seafoam','ice')},
+{key:'Синие',dot:'#3b82f6',words:new Array('blue','sapphire','cobalt','navy','sky','azure','celtic','ocean','frost')},
+{key:'Коричневые',dot:'#a16207',words:new Array('brown','chocolate','coffee','caramel','bronze','wood','sand','cocoa','chestnut','choco')}
 );
 function detectColorCategory(t) {
 const l = (t || '').toLowerCase();
@@ -205,15 +207,15 @@ if (data.error) { status.innerText = data.error; return; }
 if (data.funpay_link) { funpayUrl = data.funpay_link; document.getElementById('topSellerLink').href = funpayUrl; }
 if (!initializedCollections && data.collections) {
 const colSel = document.getElementById('collectionSelect');
-colSel.innerHTML = '<option value="ALL">Коллекции: Все (29)</option>';
+colSel.innerHTML = '<option value="ALL">Коллекции: Все (' + data.collections.length + ')</option>';
 data.collections.forEach(c => { const o = document.createElement('option'); o.value = c; o.innerText = c; if (c === col) o.selected = true; colSel.appendChild(o); });
 initializedCollections = true;
 }
 rawItems = (data.items || new Array()).map(item => {
 const cM = detectColorCategory(item.model);
 const cB = detectColorCategory(item.backdrop);
-const isM = (cM && cB && cM.key === cB.key) || (cB && !cM);
-return Object.assign({}, item, { colorCat: cB ? cB.key : (cM ? cM.key : null), colorDot: cB ? cB.dot : (cM ? cM.dot : '#8b5cf6'), isMono: Boolean(isM) });
+const isM = Boolean(cM && cB && cM.key === cB.key);
+return Object.assign({}, item, { colorCat: isM ? cB.key : null, colorDot: isM ? cB.dot : '#8b5cf6', isMono: isM });
 });
 populateAttributeDropdowns(rawItems);
 buildMonoChips();
@@ -232,7 +234,7 @@ bSel.innerHTML = '<option value="">Фоны: Все</option>';
 backdrops.forEach(b => { const o = document.createElement('option'); o.value = b; o.innerText = b; if (b === curB) o.selected = true; bSel.appendChild(o); });
 }
 function buildMonoChips() {
-const monoItems = rawItems.filter(i => i.colorCat);
+const monoItems = rawItems.filter(i => i.isMono);
 const container = document.getElementById('colorChips');
 container.innerHTML = '';
 const allBtn = document.createElement('button');
@@ -257,7 +259,7 @@ const emptyFav = document.getElementById('emptyFavState');
 const grid = document.getElementById('grid');
 let list = currentTab === 'fav' ? favorites.slice() : rawItems.slice();
 if (currentTab === 'mono') {
-list = list.filter(i => i.colorCat);
+list = list.filter(i => i.isMono);
 if (selectedMonoColor !== 'ALL') list = list.filter(i => i.colorCat === selectedMonoColor);
 }
 const mF = document.getElementById('modelSelect').value;
@@ -275,7 +277,7 @@ return true;
 grid.innerHTML = ''; emptyFav.style.display = 'none'; status.style.display = 'none';
 if (list.length === 0) {
 if (currentTab === 'fav' && favorites.length === 0) emptyFav.style.display = 'block';
-else { status.style.display = 'block'; status.innerText = 'По выбранным фильтрам подарков не найдено. Нажмите Enter в поиске для поиска по всей базе.'; }
+else { status.style.display = 'block'; status.innerText = currentTab === 'mono' ? 'Среди загруженных лотов строго монохромных подарков не нашлось. Попробуйте выбрать конкретную коллекцию.' : 'По выбранным фильтрам подарков не найдено. Нажмите Enter в поиске для поиска по всей базе.'; }
 return;
 }
 list.forEach(item => {
@@ -284,11 +286,22 @@ const card = document.createElement('div'); card.className = 'card';
 const visual = document.createElement('div'); visual.className = 'card-visual';
 visual.style.background = 'radial-gradient(circle, ' + item.bg_center + ' 0%, ' + item.bg_edge + ' 100%)';
 if (currentTab === 'mono' && item.colorCat) {
-const tag = document.createElement('div'); tag.className = 'mono-tag';
+const tag = document.createElement('div'); tag.className = 'badge-left';
 tag.innerHTML = '<span class="dot-c" style="background:' + item.colorDot + '"></span>' + item.colorCat.slice(0, -1) + 'й';
 visual.appendChild(tag);
+} else if (item.rarity) {
+const tag = document.createElement('div'); tag.className = 'badge-left';
+tag.innerText = item.rarity + '%';
+visual.appendChild(tag);
 }
-const favBtn = document.createElement('button'); favBtn.className = 'fav-btn' + (isFav ? ' is-fav' : '');
+const rightBtns = document.createElement('div'); rightBtns.className = 'top-right-btns';
+if (item.tg_link) {
+const tgBtn = document.createElement('a'); tgBtn.className = 'icon-circle';
+tgBtn.href = item.tg_link; tgBtn.target = '_blank'; tgBtn.title = '3D-превью в Telegram';
+tgBtn.innerText = '↗';
+rightBtns.appendChild(tgBtn);
+}
+const favBtn = document.createElement('button'); favBtn.className = 'icon-circle' + (isFav ? ' is-fav' : '');
 favBtn.title = 'В избранное'; favBtn.innerText = isFav ? '♥' : '♡';
 favBtn.onclick = (e) => {
 e.stopPropagation();
@@ -297,7 +310,8 @@ if (idx >= 0) favorites.splice(idx, 1); else favorites.push(item);
 localStorage.setItem('nft_favs', JSON.stringify(favorites));
 updateFavCounter(); applyFilters();
 };
-visual.appendChild(favBtn);
+rightBtns.appendChild(favBtn);
+visual.appendChild(rightBtns);
 const img = document.createElement('img'); img.src = item.image; img.alt = item.collection; img.loading = 'lazy';
 visual.appendChild(img);
 const body = document.createElement('div'); body.className = 'card-body';
@@ -308,7 +322,7 @@ sub.innerText = item.model + ' #' + item.number;
 const buyBtn = document.createElement('button'); buyBtn.className = 'price-btn';
 buyBtn.innerText = item.price_rub.toLocaleString('ru-RU') + ' ₽';
 buyBtn.onclick = () => {
-const text = 'Здравствуйте! Хочу купить подарок: ' + item.collection + ' #' + item.number + ' (Модель: ' + item.model + ', Фон: ' + item.backdrop + ') за ' + item.price_rub + ' ₽';
+const text = 'Здравствуйте! Хочу купить подарок: ' + item.collection + ' #' + item.number + ' (Модель: ' + item.model + ', Фон: ' + item.backdrop + ') за ' + item.price_rub + ' ₽ <ID: ' + item.id + '>';
 if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
 alert('Текст заказа скопирован в буфер обмена!\n\n' + text + '\n\nСейчас откроется профиль FunPay — вставьте сообщение в чат продавцу.');
 window.open(funpayUrl, '_blank');
