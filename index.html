@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Каталог NFT Подарков Telegram | Оплата через FunPay</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0f1115;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            max-width: 1200px;
+            margin: 0 auto 24px auto;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            background: #181b22;
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid #262b36;
+        }
+        .header h1 { margin: 0; font-size: 22px; }
+        .badge {
+            background: #2481cc;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .controls {
+            max-width: 1200px;
+            margin: 0 auto 24px auto;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        select, button.refresh-btn {
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid #2e3442;
+            background: #181b22;
+            color: #fff;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        button.refresh-btn:hover { background: #232833; }
+        .grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            gap: 18px;
+        }
+        .card {
+            background: #181b22;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid #262b36;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.15s;
+        }
+        .card:hover { transform: translateY(-4px); border-color: #3a4254; }
+        .img-box {
+            height: 190px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .img-box img {
+            width: 135px;
+            height: 135px;
+            object-fit: contain;
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.4));
+        }
+        .num-tag {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.5);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .info { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
+        .title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+        .attrs { font-size: 12px; color: #9aa3b2; line-height: 1.5; margin-bottom: 14px; }
+        .price-row {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .price-rub { font-size: 20px; font-weight: 800; color: #4ade80; }
+        .buy-btn {
+            width: 100%;
+            padding: 11px;
+            background: #2481cc;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+        }
+        .buy-btn:hover { background: #1d6eb0; }
+        .status { text-align: center; padding: 40px; color: #9aa3b2; font-size: 16px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <h1>🎁 Витрина NFT Подарков Telegram</h1>
+        <div style="color: #9aa3b2; font-size: 13px; margin-top: 4px;">
+            Выберите подарок — заказ скопируется автоматически, оплата строго через FunPay
+        </div>
+    </div>
+    <div class="badge" id="rateBadge">Курс TON: загрузка...</div>
+</div>
+
+<div class="controls">
+    <select id="collectionSelect" onchange="loadGifts()">
+        <option value="Snake Box">Snake Box</option>
+    </select>
+    <button class="refresh-btn" onclick="loadGifts()">🔄 Обновить цены</button>
+</div>
+
+<div id="status" class="status">Загрузка подарков...</div>
+<div class="grid" id="grid"></div>
+
+<script>
+    let initialized = false;
+    let funpayUrl = "https://funpay.com";
+
+    async function loadGifts() {
+        const select = document.getElementById('collectionSelect');
+        const grid = document.getElementById('grid');
+        const status = document.getElementById('status');
+        
+        status.style.display = 'block';
+        status.innerText = 'Загрузка актуальных лотов...';
+        grid.innerHTML = '';
+
+        const col = select.value;
+        const res = await fetch(`/api/gifts?collection=${encodeURIComponent(col)}`);
+        const data = await res.json();
+
+        if (data.error) {
+            status.innerText = data.error;
+            return;
+        }
+
+        funpayUrl = data.funpay_link;
+        document.getElementById('rateBadge').innerText = `Курс TON: ~${data.ton_rate} ₽`;
+
+        if (!initialized && data.collections) {
+            select.innerHTML = '<option value="ALL">🔥 Все 29 коллекций (самые дешевые)</option>';
+            data.collections.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.innerText = c;
+                if (c === col) opt.selected = true;
+                select.appendChild(opt);
+            });
+            initialized = true;
+        }
+
+        status.style.display = 'none';
+
+        if (data.items.length === 0) {
+            status.style.display = 'block';
+            status.innerText = 'В этой коллекции сейчас нет доступных лотов.';
+            return;
+        }
+
+        data.items.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            const copyText = `Здравствуйте! Хочу купить подарок: ${item.collection} #${item.number} (Модель: ${item.model}, Фон: ${item.backdrop}) за ${item.price_rub} ₽`;
+            
+            card.innerHTML = `
+                <div class="img-box" style="background: radial-gradient(circle, ${item.bg_center} 0%, ${item.bg_edge} 100%);">
+                    <div class="num-tag">#${item.number}</div>
+                    <img src="${item.image}" alt="${item.collection}" loading="lazy">
+                </div>
+                <div class="info">
+                    <div class="title">${item.collection}</div>
+                    <div class="attrs">
+                        Модель: <b>${item.model}</b><br>
+                        Фон: ${item.backdrop}<br>
+                        Узор: ${item.symbol || '—'}
+                    </div>
+                    <div class="price-row">
+                        <span class="price-rub">${item.price_rub.toLocaleString('ru-RU')} ₽</span>
+                    </div>
+                    <button class="buy-btn" onclick="orderGift('${copyText.replace(/'/g, "\\'")}')">
+                        Купить на FunPay
+                    </button>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    function orderGift(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Текст заказа скопирован в буфер обмена!\n\n' + text + '\n\nСейчас откроется FunPay — просто вставьте сообщение в чат.');
+            window.open(funpayUrl, '_blank');
+        });
+    }
+
+    loadGifts();
+</script>
+
+</body>
+</html>
