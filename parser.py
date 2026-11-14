@@ -1,5 +1,4 @@
 import math
-import time
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
@@ -15,7 +14,8 @@ app.add_middleware(
 )
 
 TOKEN = "deee1872-59ff-499b-9021-d7c82e40099f"
-FUNPAY_LINK = "https://funpay" + ".com/"
+FUNPAY_LINK = "https://funpay" + ".com/users/6099636/"
+TON_RATE_RUB = 1.25 * 84  # 105 рублей за 1 TON
 
 COLLECTIONS = [
     "Snake Box",
@@ -49,25 +49,6 @@ COLLECTIONS = [
     "Victory Medal",
 ]
 
-ton_rate_cache = {"rate": 105.0, "updated_at": 0}
-
-
-def get_ton_to_rub():
-  now = time.time()
-  if now - ton_rate_cache["updated_at"] > 300:
-    try:
-      cg_url = (
-          "https://api."
-          + "://coingecko.com"
-      )
-      r = requests.get(cg_url, timeout=5)
-      if r.status_code == 200:
-        ton_rate_cache["rate"] = float(r.json()["the-open-network"]["rub"])
-        ton_rate_cache["updated_at"] = now
-    except Exception:
-      pass
-  return ton_rate_cache["rate"]
-
 
 def int_to_hex(color_int):
   if not color_int:
@@ -86,7 +67,7 @@ def proxy_image(path: str):
 
 
 @app.get("/api/gifts")
-def fetch_gifts(collection: str = "Snake Box"):
+def fetch_gifts(collection: str = "Snake Box", query: str = ""):
   mrkt_url = "https://api." + "tgmrkt.io/api/v1/gifts/saling"
   cdn_origin = "https://cdn." + "tgmrkt.io"
 
@@ -102,32 +83,34 @@ def fetch_gifts(collection: str = "Snake Box"):
   }
   cookies = {"access_token": TOKEN}
 
+  is_all = collection == "ALL"
+
   payload = {
-        "count": 30,
-        "cursor": "",
-        "collectionNames": [collection] if collection != "ALL" else COLLECTIONS,
-        "modelNames": [],
-        "backdropNames": [],
-        "symbolNames": [],
-        "number": None,
-        "isNew": None,
-        "isPremarket": None,
-        "luckyBuy": None,
-        "luckybuyCashback": None,
-        "giftType": None,
-        "craftable": None,
-        "isCrafted": None,
-        "tgCanBeCraftedFrom": None,
-        "removeSelfSales": None,
-        "isTransferable": None,
-        "availableForStaking": None,
-        "forGame": None,
-        "minPrice": None,
-        "maxPrice": None,
-        "ordering": "Price",
-        "lowToHigh": True,
-        "query": None,
-    }
+      "count": 100 if is_all else 30,
+      "cursor": "",
+      "collectionNames": [] if is_all else [collection],
+      "modelNames": [],
+      "backdropNames": [],
+      "symbolNames": [],
+      "number": None,
+      "isNew": None,
+      "isPremarket": None,
+      "luckyBuy": None,
+      "luckybuyCashback": None,
+      "giftType": None,
+      "craftable": None,
+      "isCrafted": None,
+      "tgCanBeCraftedFrom": None,
+      "removeSelfSales": None,
+      "isTransferable": None,
+      "availableForStaking": None,
+      "forGame": None,
+      "minPrice": None,
+      "maxPrice": None,
+      "ordering": "Price",
+      "lowToHigh": True,
+      "query": query if query.strip() else None,
+  }
 
   try:
     res = requests.post(
@@ -141,19 +124,23 @@ def fetch_gifts(collection: str = "Snake Box"):
       }
 
     raw_gifts = res.json().get("gifts", [])
-    ton_rate = get_ton_to_rub()
     items = []
 
     for g in raw_gifts:
+      col_name = g.get("collectionName")
+      # Если выбран режим ALL, оставляем только подарки из твоего списка 29 коллекций
+      if is_all and col_name not in COLLECTIONS:
+        continue
+
       price_ton = g.get("salePrice", 0) / 1_000_000_000
-      price_rub = math.ceil(((price_ton + 0.35) * ton_rate + 200) * 1.15)
+      price_rub = math.ceil(((price_ton + 0.35) * TON_RATE_RUB + 200) * 1.15)
 
       thumb = g.get("modelStickerThumbnailKey", "")
       img_url = f"/api/img?path={thumb}" if thumb else ""
 
       items.append({
           "id": g.get("id"),
-          "collection": g.get("collectionName"),
+          "collection": col_name,
           "number": g.get("number"),
           "model": g.get("modelName"),
           "backdrop": g.get("backdropName"),
@@ -166,10 +153,9 @@ def fetch_gifts(collection: str = "Snake Box"):
       })
 
     return {
-        "ton_rate": ton_rate,
         "funpay_link": FUNPAY_LINK,
         "collections": COLLECTIONS,
-        "items": items,
+        "items": items[:30],
     }
   except Exception as e:
     return {"error": str(e)}
