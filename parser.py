@@ -14,20 +14,110 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Основные настройки (можно менять на лету через /api/admin без перезапуска)
 CONFIG = {
     "token": "deee1872-59ff-499b-9021-d7c82e40099f",
     "funpay_link": "https://funpay" + ".com/users/6099636/",
-    "ton_rate_rub": 1.25 * 84,  # 105 рублей за 1 TON
-    "admin_secret": "noobasik228",  # Пароль для быстрой смены настроек
+    "ton_rate_rub": 1.25 * 84,
+    "admin_secret": "noobasik228",
 }
 
 EXCLUDED_KEYWORDS = ["pepe", "durov"]
 
-# Кэш для защиты от частых запросов и ускорения сайта
-collections_cache = []
-gifts_cache = {}  # ключ -> {"time": timestamp, "data": response_dict}
-CACHE_TTL = 30  # Время жизни кэша в секундах
+# Полный базовый список коллекций подарков Telegram (без Pepe и Durov)
+BASE_COLLECTIONS = [
+    "Astral Shard",
+    "B-Day Candle",
+    "Berry Box",
+    "Big Year",
+    "Bonded Ring",
+    "Bow Tie",
+    "Bunny Muffin",
+    "Candy Cane",
+    "Chill Flame",
+    "Cookie Heart",
+    "Crystal Ball",
+    "Cupid Charm",
+    "Desk Calendar",
+    "Diamond Ring",
+    "Easter Egg",
+    "Electric Skull",
+    "Eternal Candle",
+    "Eternal Rose",
+    "Evil Eye",
+    "Flying Broom",
+    "Gem Signet",
+    "Genie Lamp",
+    "Ginger Cookie",
+    "Hanging Star",
+    "Happy Brownie",
+    "Heart Locket",
+    "Heroic Helmet",
+    "Hex Pot",
+    "Holiday Drink",
+    "Homemade Cake",
+    "Hypno Lollipop",
+    "Ice Cream",
+    "Instant Ramen",
+    "Ion Gem",
+    "Jack-in-the-Box",
+    "Jelly Bunny",
+    "Jester Hat",
+    "Jingle Bells",
+    "Kissed Frog",
+    "Lol Pop",
+    "Loot Bag",
+    "Love Candle",
+    "Love Potion",
+    "Lunar Snake",
+    "Lush Bouquet",
+    "Mad Pumpkin",
+    "Magic Potion",
+    "Mini Oscar",
+    "Mirage Lamp",
+    "Money Pot",
+    "Mood Pack",
+    "Nail Bracelet",
+    "Neko Helmet",
+    "Party Sparkler",
+    "Perfume Bottle",
+    "Pet Snake",
+    "Pool Float",
+    "Precious Peach",
+    "Record Player",
+    "Restless Jar",
+    "Sakura Flower",
+    "Santa Hat",
+    "Scared Cat",
+    "Sharp Tongue",
+    "Signet Ring",
+    "Skull Flower",
+    "Sleigh Bell",
+    "Snake Box",
+    "Snow Globe",
+    "Snow Mittens",
+    "Spiced Wine",
+    "Spy Agaric",
+    "Star Notepad",
+    "Swiss Watch",
+    "Tama Gadget",
+    "Timeless Book",
+    "Top Hat",
+    "Toy Bear",
+    "Trapped Heart",
+    "Valentine Box",
+    "Vice Cream",
+    "Victory Medal",
+    "Vintage Cigar",
+    "Voodoo Doll",
+    "Whip Cupcake",
+    "Winter Wreath",
+    "Witch Hat",
+    "Xmas Stocking",
+]
+
+known_collections = set(BASE_COLLECTIONS)
+gifts_cache = {}
+CACHE_TTL = 30
 
 
 def is_excluded(collection_name: str) -> bool:
@@ -44,40 +134,6 @@ def make_tg_nft_link(collection_name: str, number) -> str:
   return f"https://t.me{slug}-{number}"
 
 
-def get_all_collections():
-  global collections_cache
-  if collections_cache:
-    return collections_cache
-
-  url = "https://api." + "tgmrkt.io/api/v1/gifts/collections"
-  cdn_origin = "https://cdn." + "tgmrkt.io"
-  headers = {
-      "accept": "application/json, text/plain, */*",
-      "authorization": CONFIG["token"],
-      "origin": cdn_origin,
-      "referer": cdn_origin + "/",
-      "user-agent": (
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-      ),
-  }
-  try:
-    r = requests.get(url, headers=headers, timeout=8)
-    if r.status_code == 200:
-      data = r.json()
-      names = [
-          c.get("name") or c.get("title")
-          for c in data
-          if isinstance(c, dict) and (c.get("name") or c.get("title"))
-      ]
-      filtered = [n for n in names if not is_excluded(n)]
-      if filtered:
-        collections_cache = sorted(list(set(filtered)))
-        return collections_cache
-  except Exception:
-    pass
-  return []
-
-
 def int_to_hex(color_int):
   if not color_int:
     return "#2b303a"
@@ -86,7 +142,6 @@ def int_to_hex(color_int):
 
 @app.get("/api/admin")
 def update_config(key: str, token: str = None, rate: float = None):
-  """Скрытая ссылка для мгновенной смены токена или курса с телефона."""
   if key != CONFIG["admin_secret"]:
     return {"error": "Неверный пароль"}
 
@@ -124,11 +179,10 @@ def fetch_gifts(
   if is_excluded(collection):
     return {
         "funpay_link": CONFIG["funpay_link"],
-        "collections": get_all_collections(),
+        "collections": sorted(list(known_collections)),
         "items": [],
     }
 
-  # Проверяем кэш
   cache_key = f"{collection}|{query.strip().lower()}|{sort}"
   now = time.time()
   if cache_key in gifts_cache and (
@@ -171,7 +225,7 @@ def fetch_gifts(
       "isCrafted": None,
       "tgCanBeCraftedFrom": None,
       "removeSelfSales": None,
-      "isTransferable": True,  # Только подарки, доступные к передаче сразу
+      "isTransferable": True,
       "availableForStaking": None,
       "forGame": None,
       "minPrice": None,
@@ -194,19 +248,17 @@ def fetch_gifts(
 
     raw_gifts = res.json().get("gifts", [])
     items = []
-    found_cols = set(get_all_collections())
 
     for g in raw_gifts:
       col_name = g.get("collectionName")
       if is_excluded(col_name):
         continue
 
-      # Дополнительная защита от заблокированных подарков
       if g.get("isLocked") is True or g.get("isTransferable") is False:
         continue
 
       if col_name:
-        found_cols.add(col_name)
+        known_collections.add(col_name)
 
       price_ton = g.get("salePrice", 0) / 1_000_000_000
       price_rub = math.ceil(
@@ -216,7 +268,6 @@ def fetch_gifts(
       thumb = g.get("modelStickerThumbnailKey", "")
       img_url = f"/api/img?path={thumb}" if thumb else ""
 
-      # Редкость модели в процентах (пермилле делим на 10)
       rarity_pm = g.get("modelRarityPerMille")
       rarity_pct = round(rarity_pm / 10, 2) if rarity_pm else None
 
@@ -238,7 +289,7 @@ def fetch_gifts(
 
     result_data = {
         "funpay_link": CONFIG["funpay_link"],
-        "collections": sorted(list(found_cols)),
+        "collections": sorted(list(known_collections)),
         "items": items[:50],
     }
 
