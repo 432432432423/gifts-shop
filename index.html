@@ -1,10 +1,5 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RealNoobasik228's shop — Каталог NFT Подарков Telegram</title>
-<style>
+RealNoobasik228's shop — Каталог NFT Подарков Telegram
+
 :root{--bg:#0c0a12;--card:#14121d;--inp:#171422;--hov:#1e1a2d;--brd:#262236;--purp:#8b5cf6;--pink:#f43f5e;--cyan:#38bdf8;--txt:#f8fafc;--mut:#8b869e}
 *{box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);margin:0;padding:0 20px 50px;min-height:100vh}
@@ -78,42 +73,329 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans
 .modal{background:var(--card);border:1px solid var(--brd);border-radius:18px;max-width:440px;width:100%;padding:24px}
 .modal h3{margin:0 0 10px;font-size:18px}
 .modal p{color:var(--mut);font-size:14px;line-height:1.5;margin:0 0 18px}
-</style>
-</head>
-<body>
-<div class="container">
-<div class="topbar">
-<a href="#" class="brand" onclick="switchTab('all');return false"><span class="brand-dot"></span><span>RealNoobasik228's shop</span></a>
-<div class="top-links">
-<button onclick="document.getElementById('aboutModal').style.display='flex'">О сайте</button>
-<a href="https://funpay.com" target="_blank" class="msg-link" id="topSellerLink">Написать продавцу</a>
-</div>
-</div>
-<div class="seller-banner">
-<div class="seller-left">
-<div class="avatar-wrap"><div class="avatar">R</div><span class="online-dot"></span></div>
-<div>
-<h1 class="seller-name">RealNoobasik228</h1>
-<div class="seller-meta"><span class="status-online">Онлайн</span><span class="rating-star">★ 5,0 из 5,0</span><span>55 отзывов на FunPay</span></div>
-</div>
-</div>
-<div class="seller-stats">
-<div><div class="stat-label">Коллекций</div><div class="stat-val">29</div></div>
-<div><div class="stat-label">Успешных сделок</div><div class="stat-val">55+</div></div>
-</div>
-</div>
-<div class="tabs-row">
-<button class="tab-btn active-all" id="tabAll" onclick="switchTab('all')">⊞ Все подарки</button>
-<button class="tab-btn" id="tabMono" onclick="switchTab('mono')">💎 Монохромные</button>
-<button class="tab-btn" id="tabFav" onclick="switchTab('fav')">♡ Избранные (<span id="favCount">0</span>)</button>
-</div>
-<div class="filter-box">
-<div class="filter-top">
-<div class="filter-pills">
-<select class="pill-select" id="collectionSelect" onchange="loadGifts()"><option value="ALL">Коллекции: Все (29)</option></select>
-<select class="pill-select" id="modelSelect" onchange="applyFilters()"><option value="">Модели: Все</option></select>
-<select class="pill-select" id="backdropSelect" onchange="applyFilters()"><option value="">Фоны: Все</option></select>
-</div>
-<button class="reload-icon-btn" onclick="resetAllFilters()" title="Сбросить фильтры">↻</button>
-</div>
-<div class="filter-bottom">
+
+
+
+
+
+RealNoobasik228's shop
+
+О сайте
+Написать продавцу
+
+
+
+
+R
+
+RealNoobasik228
+Онлайн★ 5,0 из 5,055 отзывов на FunPay
+
+
+
+Коллекций29
+Успешных сделок55+
+
+
+
+⊞ Все подарки
+💎 Монохромные
+♡ Избранные (0)
+
+
+
+
+Коллекции: Все (29)
+Модели: Все
+Фоны: Все
+
+↻
+
+
+
+от₽до₽
+Сначала дешёвыеСначала дорогие
+
+💎 Монохромные подарки (совпадение цвета модели и фона)
+
+
+Загрузка актуальных подарков...
+
+💗
+В избранном пока пусто
+Нажмите на сердечко на карточке любого подарка, чтобы добавить его сюда и не потерять.
+← Обратно в каталог
+
+
+
+
+
+О витрине RealNoobasik228's shop
+Это официальный каталог NFT-подарков Telegram продавца RealNoobasik228. Цены обновляются в реальном времени.
+Как купить: нажмите на кнопку с ценой под нужным подарком — текст заказа скопируется автоматически, и откроется мой профиль на FunPay. Оплата и передача подарка проходят строго через гарантию FunPay.
+Понятно
+
+
+
+let funpayUrl = "funpay.com";
+let initializedCollections = false;
+let rawItems = [];
+let currentTab = 'all';
+let selectedMonoColor = 'ALL';
+let favorites = [];
+try {
+favorites = JSON.parse(localStorage.getItem('nft_favs') || '[]');
+} catch (e) {
+favorites = [];
+}
+const COLOR_MAP = [
+{key:'Серые',dot:'#9ca3af',words:['black','onyx','silver','grey','gray','slate','graphite','steel','ash','smoke','white','ivory']},
+{key:'Фиолетовые',dot:'#a855f7',words:['purple','violet','lavender','grape','plum','amethyst','indigo','lilac']},
+{key:'Розовые',dot:'#f472b6',words:['pink','rose','magenta','peach','coral','sakura','flamingo','raspberry','berry']},
+{key:'Красные',dot:'#ef4444',words:['red','crimson','ruby','cherry','scarlet','garnet','lava','flame']},
+{key:'Оранжевые',dot:'#f97316',words:['orange','amber','tangerine','copper','apricot','sunset','persimmon','carrot']},
+{key:'Жёлтые',dot:'#eab308',words:['yellow','gold','golden','lemon','sun','honey','banana','mustard','vanilla']},
+{key:'Зелёные',dot:'#22c55e',words:['green','emerald','mint','lime','olive','forest','jade','moss','sage','shamrock']},
+{key:'Бирюзовые',dot:'#14b8a6',words:['cyan','teal','turquoise','aqua','marine','seafoam']},
+{key:'Синие',dot:'#3b82f6',words:['blue','sapphire','cobalt','navy','sky','azure','celtic','ocean','ice']},
+{key:'Коричневые',dot:'#a16207',words:['brown','chocolate','coffee','caramel','bronze','wood','sand','cocoa','chestnut']}
+];
+function detectColorCategory(t) {
+const l = (t || '').toLowerCase();
+for (const c of COLOR_MAP) {
+if (c.words.some(w => l.includes(w))) return c;
+}
+return null;
+}
+function updateFavCounter() {
+document.getElementById('favCount').innerText = favorites.length;
+}
+function switchTab(t) {
+currentTab = t;
+document.getElementById('tabAll').className = 'tab-btn' + (t === 'all' ? ' active-all' : '');
+document.getElementById('tabMono').className = 'tab-btn' + (t === 'mono' ? ' active-mono' : '');
+document.getElementById('tabFav').className = 'tab-btn' + (t === 'fav' ? ' active-fav' : '');
+document.getElementById('monoPanel').style.display = (t === 'mono') ? 'block' : 'none';
+applyFilters();
+}
+function resetAllFilters() {
+document.getElementById('collectionSelect').value = 'ALL';
+document.getElementById('modelSelect').value = '';
+document.getElementById('backdropSelect').value = '';
+document.getElementById('searchInput').value = '';
+document.getElementById('minPriceInput').value = '';
+document.getElementById('maxPriceInput').value = '';
+document.getElementById('sortSelect').value = 'PriceAsc';
+selectedMonoColor = 'ALL';
+loadGifts();
+}
+async function loadGifts() {
+const col = document.getElementById('collectionSelect').value;
+const sort = document.getElementById('sortSelect').value;
+const q = document.getElementById('searchInput').value.trim();
+const status = document.getElementById('statusMsg');
+const grid = document.getElementById('grid');
+document.getElementById('emptyFavState').style.display = 'none';
+grid.innerHTML = '';
+status.style.display = 'block';
+status.innerText = 'Загрузка актуальных подарков...';
+try {
+const res = await fetch('/api/gifts?collection=' + encodeURIComponent(col) + '&query=' + encodeURIComponent(q) + '&sort=' + encodeURIComponent(sort));
+const data = await res.json();
+if (data.error) {
+status.innerText = data.error;
+return;
+}
+if (data.funpay_link) {
+funpayUrl = data.funpay_link;
+document.getElementById('topSellerLink').href = funpayUrl;
+}
+if (!initializedCollections && data.collections) {
+const colSel = document.getElementById('collectionSelect');
+colSel.innerHTML = 'Коллекции: Все (29)';
+data.collections.forEach(c => {
+const o = document.createElement('option');
+o.value = c;
+o.innerText = c;
+if (c === col) o.selected = true;
+colSel.appendChild(o);
+});
+initializedCollections = true;
+}
+rawItems = (data.items || []).map(item => {
+const cM = detectColorCategory(item.model);
+const cB = detectColorCategory(item.backdrop);
+const isM = (cM && cB && cM.key === cB.key) || (cB && !cM);
+return {
+...item,
+colorCat: cB ? cB.key : (cM ? cM.key : null),
+colorDot: cB ? cB.dot : (cM ? cM.dot : '#8b5cf6'),
+isMono: Boolean(isM)
+};
+});
+populateAttributeDropdowns(rawItems);
+buildMonoChips();
+applyFilters();
+} catch (err) {
+status.innerText = 'Ошибка загрузки данных: ' + err.message;
+}
+}
+function populateAttributeDropdowns(items) {
+const models = [...new Set(items.map(i => i.model).filter(Boolean))].sort();
+const backdrops = [...new Set(items.map(i => i.backdrop).filter(Boolean))].sort();
+const mSel = document.getElementById('modelSelect');
+const bSel = document.getElementById('backdropSelect');
+const curM = mSel.value;
+const curB = bSel.value;
+mSel.innerHTML = 'Модели: Все';
+models.forEach(m => {
+const o = document.createElement('option');
+o.value = m; o.innerText = m;
+if (m === curM) o.selected = true;
+mSel.appendChild(o);
+});
+bSel.innerHTML = 'Фоны: Все';
+backdrops.forEach(b => {
+const o = document.createElement('option');
+o.value = b; o.innerText = b;
+if (b === curB) o.selected = true;
+bSel.appendChild(o);
+});
+}
+function buildMonoChips() {
+const monoItems = rawItems.filter(i => i.colorCat);
+const container = document.getElementById('colorChips');
+container.innerHTML = '';
+const allBtn = document.createElement('button');
+allBtn.className = 'color-chip' + (selectedMonoColor === 'ALL' ? ' active' : '');
+allBtn.innerHTML = '💎 Все цвета · ' + monoItems.length;
+allBtn.onclick = () => { selectedMonoColor = 'ALL'; buildMonoChips(); applyFilters(); };
+container.appendChild(allBtn);
+COLOR_MAP.forEach(c => {
+const cnt = monoItems.filter(i => i.colorCat === c.key).length;
+if (cnt > 0) {
+const btn = document.createElement('button');
+btn.className = 'color-chip' + (selectedMonoColor === c.key ? ' active' : '');
+btn.innerHTML = ' ' + c.key + ' · ' + cnt;
+btn.onclick = () => { selectedMonoColor = c.key; buildMonoChips(); applyFilters(); };
+container.appendChild(btn);
+}
+});
+}
+function applyFilters() {
+const status = document.getElementById('statusMsg');
+const emptyFav = document.getElementById('emptyFavState');
+const grid = document.getElementById('grid');
+let list = currentTab === 'fav' ? [...favorites] : [...rawItems];
+if (currentTab === 'mono') {
+list = list.filter(i => i.colorCat);
+if (selectedMonoColor !== 'ALL') {
+list = list.filter(i => i.colorCat === selectedMonoColor);
+}
+}
+const mF = document.getElementById('modelSelect').value;
+const bF = document.getElementById('backdropSelect').value;
+const q = document.getElementById('searchInput').value.toLowerCase().trim();
+const minP = parseFloat(document.getElementById('minPriceInput').value) || 0;
+const maxP = parseFloat(document.getElementById('maxPriceInput').value) || Infinity;
+list = list.filter(i => {
+if (mF && i.model !== mF) return false;
+if (bF && i.backdrop !== bF) return false;
+if (i.price_rub < minP || i.price_rub > maxP) return false;
+if (q) {
+const h = (i.collection + ' ' + i.model + ' ' + i.backdrop + ' ' + i.symbol + ' #' + i.number).toLowerCase();
+if (!h.includes(q)) return false;
+}
+return true;
+});
+grid.innerHTML = '';
+emptyFav.style.display = 'none';
+status.style.display = 'none';
+if (list.length === 0) {
+if (currentTab === 'fav' && favorites.length === 0) {
+emptyFav.style.display = 'block';
+} else {
+status.style.display = 'block';
+status.innerText = 'По выбранным фильтрам подарков не найдено. Нажмите Enter в поиске для поиска по всей базе.';
+}
+return;
+}
+list.forEach(item => {
+const isFav = favorites.some(f => f.id === item.id);
+const card = document.createElement('div');
+card.className = 'card';
+const visual = document.createElement('div');
+visual.className = 'card-visual';
+visual.style.background = 'radial-gradient(circle, ' + item.bg_center + ' 0%, ' + item.bg_edge + ' 100%)';
+if (currentTab === 'mono' && item.colorCat) {
+const tag = document.createElement('div');
+tag.className = 'mono-tag';
+tag.innerHTML = '' + item.colorCat.slice(0, -1) + 'й';
+visual.appendChild(tag);
+}
+const favBtn = document.createElement('button');
+favBtn.className = 'fav-btn' + (isFav ? ' is-fav' : '');
+favBtn.title = 'В избранное';
+favBtn.innerText = isFav ? '♥' : '♡';
+favBtn.onclick = (e) => {
+e.stopPropagation();
+const idx = favorites.findIndex(f => f.id === item.id);
+if (idx >= 0) favorites.splice(idx, 1);
+else favorites.push(item);
+localStorage.setItem('nft_favs', JSON.stringify(favorites));
+updateFavCounter();
+applyFilters();
+};
+visual.appendChild(favBtn);
+const img = document.createElement('img');
+img.src = item.image;
+img.alt = item.collection;
+img.loading = 'lazy';
+visual.appendChild(img);
+const body = document.createElement('div');
+body.className = 'card-body';
+const title = document.createElement('div');
+title.className = 'card-title';
+title.innerText = item.collection;
+const sub = document.createElement('div');
+sub.className = 'card-sub';
+sub.title = item.model + ' • Фон: ' + item.backdrop + ' • Узор: ' + item.symbol;
+sub.innerText = item.model + ' #' + item.number;
+const buyBtn = document.createElement('button');
+buyBtn.className = 'price-btn';
+buyBtn.innerText = item.price_rub.toLocaleString('ru-RU') + ' ₽';
+buyBtn.onclick = () => {
+const text = 'Здравствуйте! Хочу купить подарок: ' + item.collection + ' #' + item.number + ' (Модель: ' + item.model + ', Фон: ' + item.backdrop + ') за ' + item.price_rub + ' ₽';
+if (navigator.clipboard) {
+navigator.clipboard.writeText(text).catch(() => {});
+}
+alert('Текст заказа скопирован в буфер обмена!\n\n' + text + '\n\nСейчас откроется профиль FunPay — вставьте сообщение в чат продавцу.');
+window.open(funpayUrl, '_blank');
+};
+body.appendChild(title);
+body.appendChild(sub);
+body.appendChild(buyBtn);
+card.appendChild(visual);
+card.appendChild(body);
+grid.appendChild(card);
+});
+}
+document.getElementById('brandLink').onclick = (e) => { e.preventDefault(); switchTab('all'); };
+document.getElementById('aboutOpenBtn').onclick = () => { document.getElementById('aboutModal').style.display = 'flex'; };
+document.getElementById('aboutCloseBtn').onclick = () => { document.getElementById('aboutModal').style.display = 'none'; };
+document.getElementById('aboutModal').onclick = (e) => { if (e.target.id === 'aboutModal') document.getElementById('aboutModal').style.display = 'none'; };
+document.getElementById('tabAll').onclick = () => switchTab('all');
+document.getElementById('tabMono').onclick = () => switchTab('mono');
+document.getElementById('tabFav').onclick = () => switchTab('fav');
+document.getElementById('backToAllBtn').onclick = () => switchTab('all');
+document.getElementById('resetFiltersBtn').onclick = resetAllFilters;
+document.getElementById('collectionSelect').onchange = loadGifts;
+document.getElementById('sortSelect').onchange = loadGifts;
+document.getElementById('modelSelect').onchange = applyFilters;
+document.getElementById('backdropSelect').onchange = applyFilters;
+document.getElementById('minPriceInput').oninput = applyFilters;
+document.getElementById('maxPriceInput').oninput = applyFilters;
+document.getElementById('searchInput').oninput = applyFilters;
+document.getElementById('searchInput').onkeydown = (e) => { if (e.key === 'Enter') loadGifts(); };
+updateFavCounter();
+loadGifts();
