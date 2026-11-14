@@ -127,7 +127,7 @@
             Выберите подарок — заказ скопируется автоматически, оплата строго через FunPay
         </div>
     </div>
-    <div class="badge" id="rateBadge">Курс TON: загрузка...</div>
+    
 </div>
 
 <div class="controls">
@@ -163,7 +163,7 @@
         }
 
         funpayUrl = data.funpay_link;
-        document.getElementById('rateBadge').innerText = `Курс TON: ~${data.ton_rate} ₽`;
+        
 
         if (!initialized && data.collections) {
             select.innerHTML = '<option value="ALL">🔥 Все 29 коллекций (самые дешевые)</option>';
