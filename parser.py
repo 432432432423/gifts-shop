@@ -15,7 +15,7 @@ app.add_middleware(
 
 TOKEN = "deee1872-59ff-499b-9021-d7c82e40099f"
 FUNPAY_LINK = "https://funpay" + ".com/users/6099636/"
-TON_RATE_RUB = 1.25 * 84  # 105 рублей за 1 TON
+TON_RATE_RUB = 1.25 * 84
 
 COLLECTIONS = [
     "Snake Box",
@@ -89,7 +89,7 @@ def fetch_gifts(
   low_to_high = sort != "PriceDesc"
 
   payload = {
-      "count": 100 if is_all else 50,
+      "count": 100 if is_all else 60,
       "cursor": "",
       "collectionNames": [] if is_all else [collection],
       "modelNames": [],
@@ -157,7 +157,7 @@ def fetch_gifts(
     return {
         "funpay_link": FUNPAY_LINK,
         "collections": COLLECTIONS,
-        "items": items[:40],
+        "items": items[:50],
     }
   except Exception as e:
     return {"error": str(e)}
