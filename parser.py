@@ -1,6 +1,6 @@
 import math
 import time
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 import requests
@@ -15,7 +15,7 @@ app.add_middleware(
 )
 
 TOKEN = "deee1872-59ff-499b-9021-d7c82e40099f"
-FUNPAY_LINK = "https://funpay.com"
+FUNPAY_LINK = "https://funpay" + ".com/"
 
 COLLECTIONS = [
     "Snake Box",
@@ -56,11 +56,11 @@ def get_ton_to_rub():
   now = time.time()
   if now - ton_rate_cache["updated_at"] > 300:
     try:
-      r = requests.get(
+      cg_url = (
           "https://api."
-          + "://coingecko.com",
-          timeout=5,
+          + "://coingecko.com"
       )
+      r = requests.get(cg_url, timeout=5)
       if r.status_code == 200:
         ton_rate_cache["rate"] = float(r.json()["the-open-network"]["rub"])
         ton_rate_cache["updated_at"] = now
@@ -69,27 +69,37 @@ def get_ton_to_rub():
   return ton_rate_cache["rate"]
 
 
-
 def int_to_hex(color_int):
   if not color_int:
     return "#2b303a"
   return f"#{color_int:06x}"
 
 
+@app.get("/api/img")
+def proxy_image(path: str):
+  cdn_url = "https://cdn." + "tgmrkt.io/" + path
+  try:
+    r = requests.get(cdn_url, timeout=10)
+    return Response(content=r.content, media_type="image/webp")
+  except Exception:
+    return Response(status_code=404)
+
+
 @app.get("/api/gifts")
 def fetch_gifts(collection: str = "Snake Box"):
-    url = "https://api." + "tgmrkt.io/api/v1/gifts/saling"
-    headers = {
-        "accept": "application/json, text/plain, */*",
-        "authorization": TOKEN,
-        "content-type": "application/json",
-        "origin": "https://cdn." + "tgmrkt.io",
-        "referer": "https://cdn." + "tgmrkt.io/",
-        "user-agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        ),
-    }
+  mrkt_url = "https://api." + "tgmrkt.io/api/v1/gifts/saling"
+  cdn_origin = "https://cdn." + "tgmrkt.io"
 
+  headers = {
+      "accept": "application/json, text/plain, */*",
+      "authorization": TOKEN,
+      "content-type": "application/json",
+      "origin": cdn_origin,
+      "referer": cdn_origin + "/",
+      "user-agent": (
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+      ),
+  }
   cookies = {"access_token": TOKEN}
 
   payload = {
@@ -102,7 +112,7 @@ def fetch_gifts(collection: str = "Snake Box"):
 
   try:
     res = requests.post(
-        url, headers=headers, cookies=cookies, json=payload, timeout=10
+        mrkt_url, headers=headers, cookies=cookies, json=payload, timeout=10
     )
     if res.status_code != 200:
       return {
@@ -115,13 +125,12 @@ def fetch_gifts(collection: str = "Snake Box"):
     ton_rate = get_ton_to_rub()
     items = []
 
-            for g in raw_gifts:
-          price_ton = g.get("salePrice", 0) / 1_000_000_000
-          price_rub = math.ceil(((price_ton + 0.35) * ton_rate + 200) * 1.21)
+    for g in raw_gifts:
+      price_ton = g.get("salePrice", 0) / 1_000_000_000
+      price_rub = math.ceil(((price_ton + 0.35) * ton_rate + 200) * 1.15)
 
-          thumb = g.get("modelStickerThumbnailKey", "")
-          img_url = f"https://cdn.{'tgmrkt.io'}/{thumb}" if thumb else ""
-"
+      thumb = g.get("modelStickerThumbnailKey", "")
+      img_url = f"/api/img?path={thumb}" if thumb else ""
 
       items.append({
           "id": g.get("id"),
