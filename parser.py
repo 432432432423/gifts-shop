@@ -103,12 +103,31 @@ def fetch_gifts(collection: str = "Snake Box"):
   cookies = {"access_token": TOKEN}
 
   payload = {
-      "count": 30,
-      "cursor": "",
-      "collectionNames": [collection] if collection != "ALL" else COLLECTIONS,
-      "ordering": "Price",
-      "lowToHigh": True,
-  }
+        "count": 30,
+        "cursor": "",
+        "collectionNames": [collection] if collection != "ALL" else COLLECTIONS,
+        "modelNames": [],
+        "backdropNames": [],
+        "symbolNames": [],
+        "number": None,
+        "isNew": None,
+        "isPremarket": None,
+        "luckyBuy": None,
+        "luckybuyCashback": None,
+        "giftType": None,
+        "craftable": None,
+        "isCrafted": None,
+        "tgCanBeCraftedFrom": None,
+        "removeSelfSales": None,
+        "isTransferable": None,
+        "availableForStaking": None,
+        "forGame": None,
+        "minPrice": None,
+        "maxPrice": None,
+        "ordering": "Price",
+        "lowToHigh": True,
+        "query": None,
+    }
 
   try:
     res = requests.post(
