@@ -67,7 +67,9 @@ def proxy_image(path: str):
 
 
 @app.get("/api/gifts")
-def fetch_gifts(collection: str = "Snake Box", query: str = ""):
+def fetch_gifts(
+    collection: str = "ALL", query: str = "", sort: str = "PriceAsc"
+):
   mrkt_url = "https://api." + "tgmrkt.io/api/v1/gifts/saling"
   cdn_origin = "https://cdn." + "tgmrkt.io"
 
@@ -84,9 +86,10 @@ def fetch_gifts(collection: str = "Snake Box", query: str = ""):
   cookies = {"access_token": TOKEN}
 
   is_all = collection == "ALL"
+  low_to_high = sort != "PriceDesc"
 
   payload = {
-      "count": 100 if is_all else 30,
+      "count": 100 if is_all else 50,
       "cursor": "",
       "collectionNames": [] if is_all else [collection],
       "modelNames": [],
@@ -108,13 +111,13 @@ def fetch_gifts(collection: str = "Snake Box", query: str = ""):
       "minPrice": None,
       "maxPrice": None,
       "ordering": "Price",
-      "lowToHigh": True,
+      "lowToHigh": low_to_high,
       "query": query if query.strip() else None,
   }
 
   try:
     res = requests.post(
-        mrkt_url, headers=headers, cookies=cookies, json=payload, timeout=10
+        mrkt_url, headers=headers, cookies=cookies, json=payload, timeout=12
     )
     if res.status_code != 200:
       return {
@@ -128,7 +131,6 @@ def fetch_gifts(collection: str = "Snake Box", query: str = ""):
 
     for g in raw_gifts:
       col_name = g.get("collectionName")
-      # Если выбран режим ALL, оставляем только подарки из твоего списка 29 коллекций
       if is_all and col_name not in COLLECTIONS:
         continue
 
@@ -142,9 +144,9 @@ def fetch_gifts(collection: str = "Snake Box", query: str = ""):
           "id": g.get("id"),
           "collection": col_name,
           "number": g.get("number"),
-          "model": g.get("modelName"),
-          "backdrop": g.get("backdropName"),
-          "symbol": g.get("symbolName"),
+          "model": g.get("modelName") or "",
+          "backdrop": g.get("backdropName") or "",
+          "symbol": g.get("symbolName") or "",
           "price_ton": round(price_ton, 2),
           "price_rub": price_rub,
           "image": img_url,
@@ -155,7 +157,7 @@ def fetch_gifts(collection: str = "Snake Box", query: str = ""):
     return {
         "funpay_link": FUNPAY_LINK,
         "collections": COLLECTIONS,
-        "items": items[:30],
+        "items": items[:40],
     }
   except Exception as e:
     return {"error": str(e)}
